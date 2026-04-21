@@ -59,6 +59,9 @@ target_models:
   - "VW GTI"
   - "VW Golf R"
   - "VW Corrado"
+  - "Datsun 510"
+  - "Datsun 1600"
+  - "Datsun Roadster"
 
 # Red-flag phrases that drop the score
 red_flags:
@@ -110,6 +113,8 @@ sources:
   craigslist: true              # reliable
   ebay_motors: true             # reliable
   bring_a_trailer: true         # reliable
+  classiccars: false            # off — most listings >$25K; low signal for weekend-car budget. Enable if you stretch to ~$40K.
+  hemmings: false               # off — Cloudflare JS challenge on search page blocks URL discovery.
   autotrader: true              # best-effort (anti-bot rate limits)
   cars_com: false               # off — SPA, needs Playwright
   cars_and_bids: false          # off — SPA, needs Playwright

@@ -2,6 +2,8 @@
 
 Scrapes public used-car listings for **manual weekend cars** near Sachse, TX and ranks each one by a worth/risk heuristic. Built for a search under ~$23K with a bias toward aesthetically-interesting manuals (classic Zs, 911s, Miatas, Boxsters, S2000s, E30/E36/E46, RX-7/8, etc.).
 
+Comes with a **local web UI** for filtering, sorting, and browsing the results — see [Web UI](#web-ui) below.
+
 ## Sources
 
 Tested against live sites, DFW radius, manual filter:
@@ -12,6 +14,8 @@ Tested against live sites, DFW radius, manual filter:
 | eBay Motors | ✅ reliable | Public search HTML. Yields ~15–40 per run. Limits to manual + within radius server-side. |
 | Bring a Trailer | ✅ reliable | Scrapes the bootstrap JSON on `/auctions/`. Nationwide, filtered client-side against your target model list. |
 | AutoTrader | ⚠️ best-effort | Works on the first request; aggressive anti-bot then rate-limits us. For better yields use Playwright (not wired in by default). |
+| ClassicCars.com | ⚠️ opt-in | Off by default. Their search/price filters don't actually filter — most listings are $40K+ muscle cars. Occasionally surfaces a sub-$23K Datsun/VW. Enable if you stretch budget. |
+| Hemmings | ⚠️ opt-in | Off by default. Cloudflare JS challenge blocks the search-page URL discovery; detail pages work but we can't reach them without JS. |
 | Cars.com | ⚠️ best-effort | Page is client-side-rendered — the SSR response has the shell but not listings. Useful only with Playwright. |
 | Cars & Bids | ⚠️ best-effort | Heavy SPA, anon response is minimal. Playwright required for real data. |
 | Facebook Marketplace | ❌ off by default | Against Meta ToS; needs persistent logged-in Playwright session; UI changes break it often. |
@@ -69,10 +73,28 @@ python main.py --source craigslist --source cars_com --source ebay_motors
 ```
 
 Outputs:
-- `output/report.html` — scored, color-coded HTML report (open in a browser)
-- `output/listings.json` — raw structured data for further analysis
+- `output/report.html` — static scored HTML report (open directly in a browser)
+- `output/listings.json` — raw structured data, consumed by the web UI
 
 Both are gitignored — they contain seller location/contact info.
+
+## Web UI
+
+For browsing, filtering, and searching the results interactively:
+
+```bash
+python webapp.py
+# opens at http://127.0.0.1:5173/
+```
+
+Features:
+- **Grid view** of scored listings, sortable by best-match, all-in price, price, year, or mileage
+- **Live search** across title, model, location, and description
+- **Sidebar filters**: verdict, source, min score, price range, year range, max mileage
+- Click any card → **details modal** with full concerns/benefits + direct link to the listing
+- **Refresh data** button kicks off a fresh scrape in the background and auto-reloads the grid when done
+
+All filtering happens in the browser — the page loads the JSON file once on startup and never hits the network except for refresh.
 
 ## How scoring works
 

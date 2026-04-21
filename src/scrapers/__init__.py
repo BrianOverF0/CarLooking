@@ -11,6 +11,8 @@ from . import (
     bring_a_trailer,
     ebay_motors,
     facebook,
+    classiccars,
+    hemmings,
 )
 
 # name -> callable that accepts (criteria: dict, target_models: list[str]) -> list[Listing]
@@ -22,4 +24,6 @@ REGISTRY: dict[str, Callable[[dict, list[str]], list[Listing]]] = {
     "bring_a_trailer": bring_a_trailer.scrape,
     "ebay_motors": ebay_motors.scrape,
     "facebook_marketplace": facebook.scrape,
+    "classiccars": classiccars.scrape,
+    "hemmings": hemmings.scrape,
 }
