@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Env / secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+fb_session.json
+cookies.json
+
+# Data / output (may contain seller PII)
+output/
+listings/
+reports/
+*.db
+*.sqlite
+cache/
+.cache/
+
+# Playwright
+playwright/.cache/
+ms-playwright/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local
+.claude/

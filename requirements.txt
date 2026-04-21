@@ -1,0 +1,16 @@
+requests>=2.31.0
+curl_cffi>=0.7.0               # Chrome TLS fingerprinting — needed to bypass Cloudflare on eBay/AutoTrader
+feedparser>=6.0.11
+beautifulsoup4>=4.12.0
+lxml>=5.2.0
+python-dateutil>=2.9.0
+rich>=13.7.0
+PyYAML>=6.0.1
+jinja2>=3.1.3
+
+# Optional — only needed if you want LLM-assisted analysis
+anthropic>=0.40.0
+
+# Optional — only needed for Facebook Marketplace / cars.com / cars&bids (SPA / login-gated sites)
+# Install manually: pip install playwright && playwright install chromium
+# playwright>=1.43.0

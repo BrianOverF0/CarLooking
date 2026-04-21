@@ -1,0 +1,123 @@
+# CarLooking — search criteria
+# Edit this to tune what the scraper hunts for.
+
+criteria:
+  max_price: 23000
+  min_price: 2000
+  zip_code: "75048"        # Sachse, TX
+  radius_miles: 200
+  transmission: manual     # manual only
+  must_run: true
+  min_year: 1970           # skip pre-'70 unless you want them
+  max_year: 2020           # skip anything too new (modern Miata ND1 is ok)
+
+# Models to hunt. Order roughly by preference.
+# Analyzer uses these as target keywords in titles + descriptions.
+target_models:
+  # Aesthetic / classic
+  - "Porsche 911"          # 996-era likely the only thing in budget
+  - "Porsche 944"
+  - "Porsche 924"
+  - "Porsche Boxster"      # 986 / early 987
+  - "Porsche Cayman"       # 987
+  - "Datsun 240Z"
+  - "Datsun 260Z"
+  - "Datsun 280Z"
+  - "Nissan 300ZX"
+  - "Nissan 350Z"
+  - "Nissan 370Z"
+  - "Mazda RX-7"
+  - "Mazda RX-8"
+  - "Mazda Miata"
+  - "Mazda MX-5"
+  - "Honda S2000"
+  - "Honda CRX"
+  - "Acura Integra"
+  - "Acura RSX"
+  - "Toyota MR2"
+  - "Toyota Celica"
+  - "Toyota Supra"
+  - "BMW Z3"
+  - "BMW Z4"
+  - "BMW E30"
+  - "BMW E36"
+  - "BMW E46"
+  - "BMW M3"
+  - "Alfa Romeo Spider"
+  - "Alfa Romeo GTV"
+  - "Lotus Elise"
+  - "Lotus Exige"
+  - "Fiat 124"
+  - "Fiat Spider"
+  - "MG MGB"
+  - "Triumph TR6"
+  - "Triumph Spitfire"
+  - "Subaru WRX"
+  - "Subaru BRZ"
+  - "Toyota 86"
+  - "Scion FR-S"
+  - "VW GTI"
+  - "VW Golf R"
+  - "VW Corrado"
+
+# Red-flag phrases that drop the score
+red_flags:
+  - "rebuilt title"
+  - "salvage title"
+  - "salvage"
+  - "no title"
+  - "bill of sale only"
+  - "not running"
+  - "doesn't run"
+  - "won't start"
+  - "needs engine"
+  - "needs transmission"
+  - "blown motor"
+  - "blown engine"
+  - "flood"
+  - "mechanic's special"
+  - "project"
+  - "parts car"
+  - "as-is"
+  - "as is where is"
+  - "frame damage"
+  - "bent frame"
+  - "rust through"
+
+# Green-flag phrases that boost score
+green_flags:
+  - "clean title"
+  - "maintenance records"
+  - "service records"
+  - "garage kept"
+  - "garaged"
+  - "one owner"
+  - "original owner"
+  - "numbers matching"
+  - "matching numbers"
+  - "recent service"
+  - "new clutch"
+  - "new timing belt"
+  - "new tires"
+  - "cold a/c"
+  - "ice cold a/c"
+  - "ac blows cold"
+  - "a/c blows cold"
+
+# Which scrapers to run.
+# Leave the best-effort ones enabled — they won't crash the run if they 403.
+sources:
+  craigslist: true              # reliable
+  ebay_motors: true             # reliable
+  bring_a_trailer: true         # reliable
+  autotrader: true              # best-effort (anti-bot rate limits)
+  cars_com: false               # off — SPA, needs Playwright
+  cars_and_bids: false          # off — SPA, needs Playwright
+  facebook_marketplace: false   # off — requires Playwright + logged-in session
+  cargurus: false               # off — Cloudflare-gated, needs Playwright
+
+# Output
+output:
+  json_path: "output/listings.json"
+  html_report: "output/report.html"
+  top_n: 25                     # show top N ranked listings in report
