@@ -23,6 +23,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from typing import Optional
 
 from .ac_estimator import estimate_ac_cost
@@ -180,6 +181,27 @@ def score_listing(
             concerns.append(f"Minor A/C service likely (~${ac_cost})")
     elif ac_cost == 0:
         benefits.append("A/C reported cold/working")
+
+    # --- Bid/auction discount
+    # Active bids are opening bids — final price will be higher. Penalize unless
+    # the auction closes within 24 hours (current bid is near-final at that point).
+    if listing.price_type == "bid":
+        hours_left: Optional[float] = None
+        if listing.auction_ends:
+            try:
+                end_dt = datetime.fromisoformat(listing.auction_ends)
+                if end_dt.tzinfo is None:
+                    end_dt = end_dt.replace(tzinfo=timezone.utc)
+                hours_left = (end_dt - datetime.now(tz=timezone.utc)).total_seconds() / 3600
+            except (ValueError, TypeError):
+                pass
+
+        if hours_left is not None and hours_left <= 24:
+            benefits.append(f"Auction ends in {int(hours_left)}h — bid near final")
+        else:
+            score -= 15
+            when = f"in ~{int(hours_left/24)}d" if hours_left else "date unknown"
+            concerns.append(f"Active bid ({when}) — expect final price to be higher")
 
     # --- All-in price
     if price is not None:

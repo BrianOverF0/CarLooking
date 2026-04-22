@@ -165,10 +165,19 @@ TEMPLATE = r"""<!doctype html>
 
   .card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; cursor: pointer; transition: transform 0.12s ease, border-color 0.12s;
-    display: flex; flex-direction: column; gap: 8px;
+    padding: 0; cursor: pointer; transition: transform 0.12s ease, border-color 0.12s;
+    display: flex; flex-direction: column; overflow: hidden;
   }
   .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card-img {
+    width: 100%; height: 180px; object-fit: cover; display: block; flex-shrink: 0;
+    background: var(--panel-2);
+  }
+  .card-img-placeholder {
+    width: 100%; height: 180px; display: flex; align-items: center; justify-content: center;
+    background: var(--panel-2); color: var(--border); font-size: 32px; flex-shrink: 0;
+  }
+  .card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
   .card .row1 { display: flex; align-items: center; gap: 8px; }
   .score-badge {
     color: white; font-weight: 700; padding: 3px 8px; border-radius: 6px;
@@ -196,6 +205,12 @@ TEMPLATE = r"""<!doctype html>
   .pt-sold { background: #64748b; color: white; }
   .pt-asking { background: #334155; color: #cbd5e1; }
   .pt-auction { background: #0891b2; color: white; }
+  .auction-ends {
+    font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600;
+    display: inline-block; margin-top: 4px;
+  }
+  .auction-ends.soon { background: #7c3aed22; color: #a78bfa; border: 1px solid #7c3aed55; }
+  .auction-ends.live { background: #dc262622; color: #f87171; border: 1px solid #dc262655; }
 
   /* Modal */
   .modal-bg {
@@ -209,7 +224,15 @@ TEMPLATE = r"""<!doctype html>
     max-width: 720px; width: 100%; max-height: 90vh; overflow: auto;
     padding: 22px 26px;
   }
-  .modal h2 { margin-top: 0; }
+  .modal h2 { margin-top: 0; margin-bottom: 4px; }
+  .modal-gallery {
+    display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .modal-gallery img {
+    height: 200px; width: auto; max-width: 340px; object-fit: cover;
+    border-radius: 6px; flex-shrink: 0; border: 1px solid var(--border);
+  }
   .modal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; margin: 14px 0; }
   .modal .item .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: block; }
   .modal .item .v { font-size: 14px; }
@@ -424,24 +447,32 @@ function render() {
     const card = document.createElement("article");
     card.className = "card";
     card.dataset.idx = listings.indexOf(l);
+    const imgUrl = (l.images && l.images[0]) ? l.images[0] : "";
+    const imgHtml = imgUrl
+      ? `<img class="card-img" src="${escapeHTML(imgUrl)}" alt="${escapeHTML(l.title||"")}" loading="lazy" onerror="this.parentNode.replaceChild(Object.assign(document.createElement('div'),{className:'card-img-placeholder',textContent:'🚗'}),this)">`
+      : `<div class="card-img-placeholder">🚗</div>`;
     card.innerHTML = `
-      <div class="row1">
-        <span class="score-badge" style="background:${color}">${(l.score||0).toFixed(0)}</span>
-        <span class="verdict" style="color:${color}">${l.verdict||"?"}</span>
-        <span class="source">${l.source}</span>
-      </div>
-      <div class="title">${escapeHTML(l.title||"")}</div>
-      <div class="meta">
-        ${l.year ? `<span>${l.year}</span>` : ""}
-        ${l.mileage ? `<span>${num(l.mileage)} mi</span>` : ""}
-        ${l.transmission ? `<span>${escapeHTML(l.transmission)}</span>` : ""}
-        ${l.location ? `<span>${escapeHTML(l.location)}</span>` : ""}
-        ${l.distance_miles ? `<span>${Math.round(l.distance_miles)} mi away</span>` : ""}
-      </div>
-      <div class="prices">
-        <div class="box"><span class="label">${priceTypeLabel(l.price_type)}</span><span class="value">${money(l.price)}${priceTypeBadge(l.price_type)}</span></div>
-        <div class="box"><span class="label">A/C work</span><span class="value">${l.ac_estimate_usd == null ? "—" : (l.ac_estimate_usd === 0 ? "Works" : money(l.ac_estimate_usd))}</span></div>
-        <div class="box"><span class="label">All-in</span><span class="value">${money(l.all_in_price)}</span></div>
+      ${imgHtml}
+      <div class="card-body">
+        <div class="row1">
+          <span class="score-badge" style="background:${color}">${(l.score||0).toFixed(0)}</span>
+          <span class="verdict" style="color:${color}">${l.verdict||"?"}</span>
+          <span class="source">${l.source}</span>
+        </div>
+        <div class="title">${escapeHTML(l.title||"")}</div>
+        <div class="meta">
+          ${l.year ? `<span>${l.year}</span>` : ""}
+          ${l.mileage ? `<span>${num(l.mileage)} mi</span>` : ""}
+          ${l.transmission ? `<span>${escapeHTML(l.transmission)}</span>` : ""}
+          ${l.location ? `<span>${escapeHTML(l.location)}</span>` : ""}
+          ${l.distance_miles ? `<span>${Math.round(l.distance_miles)} mi away</span>` : ""}
+        </div>
+        ${auctionEndsHtml(l)}
+        <div class="prices">
+          <div class="box"><span class="label">${priceTypeLabel(l.price_type)}</span><span class="value">${money(l.price)}${priceTypeBadge(l.price_type)}</span></div>
+          <div class="box"><span class="label">A/C work</span><span class="value">${l.ac_estimate_usd == null ? "—" : (l.ac_estimate_usd === 0 ? "Works" : money(l.ac_estimate_usd))}</span></div>
+          <div class="box"><span class="label">All-in</span><span class="value">${money(l.all_in_price)}</span></div>
+        </div>
       </div>`;
     card.addEventListener("click", () => openModal(l));
     grid.appendChild(card);
@@ -451,6 +482,9 @@ function render() {
 function openModal(l) {
   const color = VERDICT_COLORS[l.verdict] || "#6b7280";
   const modal = document.getElementById("modal");
+  const galleryHtml = (l.images && l.images.length)
+    ? `<div class="modal-gallery">${l.images.map(u=>`<img src="${escapeHTML(u)}" loading="lazy" onerror="this.style.display='none'">`).join("")}</div>`
+    : "";
   modal.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
       <span class="score-badge" style="background:${color}">${(l.score||0).toFixed(0)}</span>
@@ -458,6 +492,8 @@ function openModal(l) {
       <span class="source">${l.source}</span>
     </div>
     <h2>${escapeHTML(l.title||"")}</h2>
+    ${auctionEndsHtml(l)}
+    ${galleryHtml}
     <div class="grid2">
       <div class="item"><span class="k">${priceTypeLabel(l.price_type)}</span><span class="v">${money(l.price)}${priceTypeBadge(l.price_type)}</span></div>
       <div class="item"><span class="k">A/C retrofit</span><span class="v">${l.ac_estimate_usd == null ? "—" : (l.ac_estimate_usd === 0 ? "Works as-listed" : money(l.ac_estimate_usd))}</span></div>
@@ -537,6 +573,20 @@ function escapeHTML(s) {
   return String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 }
 
+function auctionEndsHtml(l) {
+  if (l.price_type !== "bid" || !l.auction_ends) return "";
+  const end = new Date(l.auction_ends);
+  if (isNaN(end)) return "";
+  const hoursLeft = (end - Date.now()) / 3600000;
+  if (hoursLeft <= 0) return `<div class="auction-ends soon">Auction ended</div>`;
+  if (hoursLeft <= 24) {
+    const h = Math.floor(hoursLeft), m = Math.round((hoursLeft - h) * 60);
+    return `<div class="auction-ends live">Ends in ${h}h ${m}m — bid near final</div>`;
+  }
+  const days = Math.round(hoursLeft / 24);
+  return `<div class="auction-ends soon">Ends in ~${days}d — bid will climb</div>`;
+}
+
 load();
 </script>
 </body>
@@ -546,5 +596,5 @@ load();
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5173"))
-    print(f"\n  CarLooking web UI → http://127.0.0.1:{port}/\n")
+    print(f"\n  CarLooking web UI -> http://127.0.0.1:{port}/\n")
     app.run(host="127.0.0.1", port=port, debug=False)

@@ -116,6 +116,15 @@ def _parse_listings(html: str) -> list[Listing]:
         m = re.search(r"/itm/(\d+)", url)
         raw_id = m.group(1) if m else None
 
+        img_el = item.select_one("img[src]") or item.select_one("img[data-src]")
+        img_src = ""
+        if img_el:
+            img_src = img_el.get("src") or img_el.get("data-src") or ""
+            # Skip 1x1 tracking pixels and placeholder data URIs
+            if img_src.startswith("data:") or "1x1" in img_src or img_src.endswith(".gif"):
+                img_src = ""
+        images = [img_src] if img_src else []
+
         out.append(Listing(
             source="ebay_motors",
             url=url,
@@ -125,6 +134,7 @@ def _parse_listings(html: str) -> list[Listing]:
             mileage=mileage,
             transmission="manual",
             location=location,
+            images=images,
             raw_id=raw_id,
         ))
 

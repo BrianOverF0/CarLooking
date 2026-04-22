@@ -22,6 +22,7 @@ class Listing:
     images: list[str] = field(default_factory=list)
     posted_at: Optional[str] = None
     raw_id: Optional[str] = None
+    auction_ends: Optional[str] = None   # ISO datetime string; populated for BaT/auction listings
 
     # Populated by analyzer
     score: Optional[float] = None

@@ -24,6 +24,7 @@ import json
 import logging
 import math
 import re
+from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -169,6 +170,27 @@ def _item_to_listing(item: dict) -> Optional[Listing]:
     # Transmission hint from title (most BaT titles include "5-Speed" / "6-Speed Manual" / "PDK" etc.)
     trans_from_title = detect_transmission(title)
 
+    thumbnail = item.get("thumbnail_url") or item.get("image_url") or item.get("photo_url") or ""
+    images = [thumbnail] if thumbnail else []
+
+    # Auction end date — BaT bootstrap may expose closing_at (Unix timestamp),
+    # date_close (ISO string), or ends_at. Try all variants.
+    auction_ends: Optional[str] = None
+    for key in ("closing_at", "date_close", "ends_at", "close_date", "end_date"):
+        raw_end = item.get(key)
+        if not raw_end:
+            continue
+        try:
+            if isinstance(raw_end, (int, float)):
+                # Unix timestamp
+                auction_ends = datetime.fromtimestamp(raw_end, tz=timezone.utc).isoformat()
+            else:
+                # Already a string — store as-is
+                auction_ends = str(raw_end)
+            break
+        except (ValueError, OSError, OverflowError):
+            continue
+
     return Listing(
         source="bring_a_trailer",
         url=url,
@@ -181,6 +203,8 @@ def _item_to_listing(item: dict) -> Optional[Listing]:
         location=item.get("country"),      # overridden by detail page when possible
         distance_miles=distance,
         description=item.get("excerpt") or "",
+        images=images,
+        auction_ends=auction_ends,
         raw_id=str(item.get("id") or ""),
     )
 
