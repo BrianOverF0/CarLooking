@@ -76,7 +76,14 @@ def _parse_listings(html: str) -> list[Listing]:
             item.select_one("span[role='heading']") or
             item.select_one("h3")
         )
+        if title_el:
+            # Remove eBay's visually-hidden accessibility spans before grabbing text
+            for hidden in title_el.select("span.LIGHT-HIGHLIGHT, span[class*='clipped'], span[aria-hidden]"):
+                hidden.decompose()
         title = title_el.get_text(" ", strip=True) if title_el else ""
+        # Belt-and-suspenders: strip any remaining accessibility cruft
+        title = re.sub(r"\s*opens in a new (?:window or tab|tab|window)\s*", "", title, flags=re.I).strip()
+        title = re.sub(r"\s*new listing\s*", "", title, flags=re.I).strip()
         if not title or title.lower().startswith("shop on ebay"):
             continue
 

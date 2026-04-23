@@ -117,8 +117,8 @@ sources:
   hemmings: false               # off — Cloudflare JS challenge on search page blocks URL discovery.
   autotrader: true              # best-effort (anti-bot rate limits)
   cars_com: false               # off — SPA, needs Playwright
-  cars_and_bids: false          # off — SPA, needs Playwright
-  facebook_marketplace: false   # off — requires Playwright + logged-in session
+  cars_and_bids: true           # enabled — anon HTML + __NEXT_DATA__ parser; nationwide auction
+  facebook_marketplace: true    # enabled — anon mode (low yield); Meta TOS: personal use only, do not redistribute
   cargurus: false               # off — Cloudflare-gated, needs Playwright
 
 # Output

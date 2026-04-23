@@ -482,6 +482,7 @@ function buildFacets() {
 
 function filterAndSort() {
   const q = state.q.toLowerCase();
+  const now = Date.now();
   let out = listings.filter(l => {
     if (q && !(
       (l.title||"").toLowerCase().includes(q) ||
@@ -498,6 +499,11 @@ function filterAndSort() {
     if (state.yearMin != null && (l.year ?? 1) < state.yearMin) return false;
     if (state.yearMax != null && (l.year ?? 9999) > state.yearMax) return false;
     if (state.milesMax != null && (l.mileage ?? 0) > state.milesMax) return false;
+    // Hide active bids with more than 24h left — current bid is not representative
+    if (l.price_type === "bid" && l.auction_ends) {
+      const hoursLeft = (new Date(l.auction_ends) - now) / 3600000;
+      if (!isNaN(hoursLeft) && hoursLeft > 24) return false;
+    }
     return true;
   });
 
