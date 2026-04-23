@@ -207,6 +207,29 @@ def api_status():
     })
 
 
+@app.post("/api/upload-listings")
+def api_upload_listings():
+    """PC scrapes with residential IP, then POSTs results here to sync to Azure SQLite."""
+    token = request.headers.get("X-Upload-Token", "")
+    expected = os.environ.get("UPLOAD_TOKEN", "")
+    if not expected or token != expected:
+        return jsonify({"error": "unauthorized"}), 401
+    data = request.get_json(force=True, silent=True)
+    if not isinstance(data, list):
+        return jsonify({"error": "expected JSON array"}), 400
+    _save_to_db(data)
+    _log.info("Uploaded %d listings from PC", len(data))
+    return jsonify({"ok": True, "count": len(data)})
+
+
+@app.get("/api/log")
+def api_log():
+    """Return the last scrape log lines for debugging."""
+    with _scrape_log_lock:
+        lines = list(_scrape_log)
+    return jsonify(lines)
+
+
 @app.get("/api/refresh/log")
 def api_refresh_log():
     """Returns the current scrape log as SSE stream, then closes."""
