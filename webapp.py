@@ -55,13 +55,15 @@ MAIN_SCRIPT = ROOT / "main.py"
 # Azure sets WEBSITE_INSTANCE_ID; local mode just uses output/ next to this file.
 _AZURE_ENV = bool(os.environ.get("WEBSITE_INSTANCE_ID"))
 
-# /home persists across Azure App Service restarts (Azure Files mount).
-# Local mode writes to output/ next to this file.
-_HOME = Path("/home") if _AZURE_ENV else ROOT / "output"
-_HOME.mkdir(parents=True, exist_ok=True)
+# DATA_DIR env var explicitly sets where DB + listings live.
+# On Azure: set DATA_DIR=/home in App Settings (persists across restarts).
+# Locally: defaults to output/ next to this file.
+_default_data_dir = "/home" if _AZURE_ENV else str(ROOT / "output")
+_DATA_DIR = Path(os.environ.get("DATA_DIR", _default_data_dir))
+_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-LISTINGS_FILE = _HOME / "listings.json"
-DB_PATH = _HOME / "carlooking.db"
+LISTINGS_FILE = _DATA_DIR / "listings.json"
+DB_PATH = _DATA_DIR / "carlooking.db"
 
 
 def _init_db() -> None:
@@ -207,6 +209,28 @@ def api_status():
     })
 
 
+@app.get("/api/debug")
+def api_debug():
+    """Shows storage paths and DB state — for troubleshooting only."""
+    try:
+        with sqlite3.connect(str(DB_PATH)) as c:
+            count = c.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
+            mtime_row = c.execute("SELECT value FROM meta WHERE key='last_scraped'").fetchone()
+            db_ok = True
+    except Exception as e:
+        count, mtime_row, db_ok = 0, None, str(e)
+    return jsonify({
+        "data_dir": str(_DATA_DIR),
+        "db_path": str(DB_PATH),
+        "db_exists": DB_PATH.exists(),
+        "db_rows": count,
+        "db_ok": db_ok,
+        "last_scraped": mtime_row[0] if mtime_row else None,
+        "WEBSITE_INSTANCE_ID": os.environ.get("WEBSITE_INSTANCE_ID", "NOT SET"),
+        "DATA_DIR_env": os.environ.get("DATA_DIR", "NOT SET"),
+    })
+
+
 @app.post("/api/upload-listings")
 def api_upload_listings():
     """PC scrapes with residential IP, then POSTs results here to sync to Azure SQLite."""
@@ -293,7 +317,7 @@ _PWA_PATHS = {"/manifest.json", "/service-worker.js", "/icon.svg"}
 def _require_auth():
     if not _PASSWORD:
         return
-    if request.path in _PWA_PATHS or request.path in ("/login", "/change-password", "/api/upload-listings"):
+    if request.path in _PWA_PATHS or request.path in ("/login", "/change-password", "/api/upload-listings", "/api/debug"):
         return
     if session.get("authed"):
         return
