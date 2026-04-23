@@ -975,6 +975,9 @@ function auctionEndsHtml(l) {
 
 load();
 
+// Auto-refresh listings every 5 minutes
+setInterval(load, 5 * 60 * 1000);
+
 // PWA: register service worker (activates fully on HTTPS; silently skipped on HTTP)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').catch(() => {});
