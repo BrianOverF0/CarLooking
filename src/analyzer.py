@@ -92,29 +92,26 @@ def score_listing(
         score -= 5
 
     # --- Price vs budget
-    # Extended models (GTR/Skyline) score against the full max_price ($40K).
-    # Everything else scores against preferred_max_price ($23K) — shows a concern
-    # if they're over that even though they're technically under the $40K hard cap.
-    max_price = criteria.get("max_price", 40000)
-    preferred_max = criteria.get("preferred_max_price", 23000)
+    # The scraper already enforces per-model budgets ($23K regular, $40K GTR).
+    # Analyzer just scores against the budget that was used to fetch this listing.
+    # GTR/Skyline listings were scraped at $40K; everything else at $23K.
+    max_price = criteria.get("max_price", 23000)
     min_price = criteria.get("min_price", 2000)
     price = listing.price
 
     _extended_keywords = {"gt-r", "gtr", "skyline", "r32", "r33", "r34", "r35"}
     hay_lower = f"{listing.title} {listing.model or ''}".lower()
     is_extended = any(k in hay_lower for k in _extended_keywords)
-    effective_max = max_price if is_extended else preferred_max
+    # Use 40K cap for extended models, standard cap for everything else
+    effective_max = 40000 if is_extended else max_price
 
     if price is None:
         concerns.append("No price listed")
         score -= 10
     else:
-        if price > max_price:
+        if price > effective_max:
             score -= 10
-            concerns.append(f"Over budget: ${price:,} > ${max_price:,}")
-        elif not is_extended and price > preferred_max:
-            score -= 5
-            concerns.append(f"Over typical $23K budget (${price:,}) — GTR stretch budget doesn't apply")
+            concerns.append(f"Over budget: ${price:,} > ${effective_max:,}")
         elif price > effective_max * 0.95:
             score += 4
             concerns.append(f"At top of budget: ${price:,}")

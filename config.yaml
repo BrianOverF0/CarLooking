@@ -2,8 +2,7 @@
 # Edit this to tune what the scraper hunts for.
 
 criteria:
-  max_price: 40000         # stretched for GTR / Skyline — most targets still well under $23K
-  preferred_max_price: 23000  # used to flag listings over typical budget
+  max_price: 23000         # standard budget for all regular cars
   min_price: 2000
   zip_code: "75048"        # Sachse, TX
   radius_miles: 200
@@ -11,6 +10,16 @@ criteria:
   must_run: true
   min_year: 1989           # R32 GT-R starts 1989; nothing useful before that anyway
   max_year: 2020           # skip anything too new
+
+# Models that get a higher budget cap — scraped in a separate pass
+extended_budget:
+  max_price: 40000
+  models:
+    - "Nissan GT-R"
+    - "Nissan Skyline"
+    - "R32 GTR"
+    - "R33 GTR"
+    - "R34 GTR"
 
 # Models to hunt. Order roughly by preference.
 # Analyzer uses these as target keywords in titles + descriptions.

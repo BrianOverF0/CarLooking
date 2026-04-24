@@ -60,6 +60,13 @@ def main() -> int:
     out_cfg = config.get("output", {})
     top_n = args.top or out_cfg.get("top_n", 25)
 
+    # Split models: regular at standard budget, extended (GTR etc.) at higher budget
+    ext_cfg = config.get("extended_budget", {})
+    ext_models: list[str] = ext_cfg.get("models", [])
+    ext_max: int = ext_cfg.get("max_price", criteria.get("max_price", 23000))
+    ext_criteria = {**criteria, "max_price": ext_max} if ext_models else {}
+    regular_models = [m for m in target_models if m not in ext_models]
+
     # Decide which scrapers to run
     if args.source:
         source_names = args.source
@@ -69,7 +76,9 @@ def main() -> int:
     print(f"[CarLooking] Sources: {', '.join(source_names)}")
     print(f"[CarLooking] Budget: ${criteria.get('min_price',0):,}-${criteria.get('max_price',0):,} "
           f"| Manual | {criteria.get('radius_miles')}mi of {criteria.get('zip_code')}")
-    print(f"[CarLooking] Target models: {len(target_models)}")
+    if ext_models:
+        print(f"[CarLooking] Extended budget (${ext_max:,}): {', '.join(ext_models)}")
+    print(f"[CarLooking] Target models: {len(target_models)} ({len(regular_models)} regular + {len(ext_models)} extended)")
 
     if args.dry_run:
         print("[CarLooking] --dry-run, exiting before network calls")
@@ -82,13 +91,24 @@ def main() -> int:
             print(f"  ! Unknown source: {name}")
             continue
         print(f"  > Scraping {name} ...")
-        try:
-            listings = fn(criteria, target_models)
-        except Exception as e:
-            logging.exception("Scraper %s crashed: %s", name, e)
-            listings = []
-        print(f"    {len(listings)} raw listings")
-        all_listings.extend(listings)
+        count = 0
+        # Pass 1: regular models at standard budget
+        if regular_models:
+            try:
+                listings = fn(criteria, regular_models)
+                count += len(listings)
+                all_listings.extend(listings)
+            except Exception as e:
+                logging.exception("Scraper %s (regular) crashed: %s", name, e)
+        # Pass 2: extended budget models (GTR etc.) at higher price cap
+        if ext_models:
+            try:
+                listings = fn(ext_criteria, ext_models)
+                count += len(listings)
+                all_listings.extend(listings)
+            except Exception as e:
+                logging.exception("Scraper %s (extended) crashed: %s", name, e)
+        print(f"    {count} raw listings")
 
     print(f"[CarLooking] Total raw listings: {len(all_listings)}")
 
