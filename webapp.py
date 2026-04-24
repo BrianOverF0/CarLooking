@@ -929,6 +929,7 @@ function buildFacets() {
   listings.forEach(l => {
     sources[l.source] = (sources[l.source] || 0) + 1;
     const v = l.verdict || "unknown";
+    if (v === "skip" || v === "risky") return;  // never shown
     verdicts[v] = (verdicts[v] || 0) + 1;
   });
 
@@ -969,6 +970,7 @@ function filterAndSort() {
       (l.description||"").toLowerCase().includes(q)
     )) return false;
     if (!state.sources.has(l.source)) return false;
+    if (l.verdict === "skip" || l.verdict === "risky") return false;
     if (!state.verdicts.has(l.verdict || "unknown")) return false;
     if ((l.score||0) < state.minScore) return false;
     const ap = l.all_in_price ?? l.price;
