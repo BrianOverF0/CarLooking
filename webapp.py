@@ -481,7 +481,7 @@ def pwa_icon():
 
 
 _SERVICE_WORKER_JS = r"""
-const CACHE = 'carlooking-v3';
+const CACHE = 'carlooking-v4';
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.add('/')));
