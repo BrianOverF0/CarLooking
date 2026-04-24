@@ -92,9 +92,18 @@ def score_listing(
         score -= 5
 
     # --- Price vs budget
-    max_price = criteria.get("max_price", 23000)
+    # Extended models (GTR/Skyline) score against the full max_price ($40K).
+    # Everything else scores against preferred_max_price ($23K) — shows a concern
+    # if they're over that even though they're technically under the $40K hard cap.
+    max_price = criteria.get("max_price", 40000)
+    preferred_max = criteria.get("preferred_max_price", 23000)
     min_price = criteria.get("min_price", 2000)
     price = listing.price
+
+    _extended_keywords = {"gt-r", "gtr", "skyline", "r32", "r33", "r34", "r35"}
+    hay_lower = f"{listing.title} {listing.model or ''}".lower()
+    is_extended = any(k in hay_lower for k in _extended_keywords)
+    effective_max = max_price if is_extended else preferred_max
 
     if price is None:
         concerns.append("No price listed")
@@ -103,10 +112,13 @@ def score_listing(
         if price > max_price:
             score -= 10
             concerns.append(f"Over budget: ${price:,} > ${max_price:,}")
-        elif price > max_price * 0.95:
+        elif not is_extended and price > preferred_max:
+            score -= 5
+            concerns.append(f"Over typical $23K budget (${price:,}) — GTR stretch budget doesn't apply")
+        elif price > effective_max * 0.95:
             score += 4
             concerns.append(f"At top of budget: ${price:,}")
-        elif price < max_price * 0.6:
+        elif price < effective_max * 0.6:
             score += 20
             benefits.append(f"Well under budget at ${price:,}")
         else:
@@ -213,7 +225,7 @@ def score_listing(
     # --- All-in price  (price + A/C + shipping)
     if price is not None:
         listing.all_in_price = price + (ac_cost or 0) + (ship or 0)
-        if listing.all_in_price > max_price * 1.1:
+        if listing.all_in_price > effective_max * 1.1:
             concerns.append(
                 f"All-in (price + A/C + shipping) ${listing.all_in_price:,} exceeds budget headroom"
             )

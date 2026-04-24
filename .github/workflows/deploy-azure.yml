@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -34,4 +35,20 @@ jobs:
             --resource-group carlooking-rg \
             --src-path deploy.zip \
             --type zip \
-            --async false
+            --async true
+
+      - name: Wait for site to be healthy
+        run: |
+          URL="https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/debug"
+          echo "Polling $URL ..."
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+            echo "Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Site is healthy."
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "Site did not become healthy within 8 minutes."
+          exit 1

@@ -2,14 +2,15 @@
 # Edit this to tune what the scraper hunts for.
 
 criteria:
-  max_price: 23000
+  max_price: 40000         # stretched for GTR / Skyline — most targets still well under $23K
+  preferred_max_price: 23000  # used to flag listings over typical budget
   min_price: 2000
   zip_code: "75048"        # Sachse, TX
   radius_miles: 200
   transmission: manual     # manual only
   must_run: true
-  min_year: 1970           # skip pre-'70 unless you want them
-  max_year: 2020           # skip anything too new (modern Miata ND1 is ok)
+  min_year: 1989           # R32 GT-R starts 1989; nothing useful before that anyway
+  max_year: 2020           # skip anything too new
 
 # Models to hunt. Order roughly by preference.
 # Analyzer uses these as target keywords in titles + descriptions.
@@ -62,6 +63,15 @@ target_models:
   - "Datsun 510"
   - "Datsun 1600"
   - "Datsun Roadster"
+  # GT-R / Skyline (budget stretched to $40K — see preferred_max_price above)
+  - "Nissan GT-R"          # R35 (2009+, sold in USA as GT-R)
+  - "Nissan Skyline"       # JDM imports — R32/R33/R34 all say "Skyline"
+  - "R32 GTR"
+  - "R33 GTR"
+  - "R34 GTR"
+  # Italian hot hatch
+  - "Fiat Abarth"
+  - "Abarth 500"
 
 # Red-flag phrases that drop the score
 red_flags:
@@ -113,7 +123,7 @@ sources:
   craigslist: true              # reliable
   ebay_motors: true             # reliable
   bring_a_trailer: true         # reliable
-  classiccars: false            # off — most listings >$25K; low signal for weekend-car budget. Enable if you stretch to ~$40K.
+  classiccars: true             # enabled — budget now $40K so their listings are relevant
   hemmings: false               # off — Cloudflare JS challenge on search page blocks URL discovery.
   autotrader: true              # best-effort (anti-bot rate limits)
   cars_com: false               # off — SPA, needs Playwright
